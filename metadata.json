@@ -1,0 +1,7 @@
+{
+  "name": "CookEasy",
+  "description": "A mobile-first cooking assistant that turns recipe photos into shoppable ingredient lists.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
