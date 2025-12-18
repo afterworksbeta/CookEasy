@@ -1,14 +1,18 @@
 
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, ChefHat, Eye, EyeOff, X } from 'lucide-react';
-import { UserRole } from '../types';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  updateProfile 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { auth } from '../firebase';
 
 interface AuthScreenProps {
-  onLogin: (name: string, email: string, role: UserRole) => void;
   onClose?: () => void;
 }
 
-const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
+const AuthScreen: React.FC<AuthScreenProps> = ({ onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,28 +21,30 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulate API delay
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      if (email === 'admin@cookeasy.com' && password === 'admin') {
-        onLogin('Admin User', email, 'admin');
-      } else if (email === 'user@cookeasy.com' && password === 'user') {
-        onLogin('Tester User', email, 'user');
+    try {
+      if (isLogin) {
+        // Firebase Login
+        await signInWithEmailAndPassword(auth, email, password);
       } else {
-        // For demo, allow registration to just log in as user
-        if (!isLogin) {
-             onLogin(fullName || email.split('@')[0], email, 'user');
-        } else {
-             setError('Invalid email or password. Try admin@cookeasy.com / admin');
-        }
+        // Firebase Registration
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Set display name
+        await updateProfile(userCredential.user, {
+          displayName: fullName
+        });
       }
-    }, 1000);
+      if (onClose) onClose();
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Authentication failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -159,11 +165,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
         </form>
 
         <div className="mt-8 text-center space-y-2">
-            <p className="text-xs text-gray-400">Demo Credentials:</p>
-            <div className="flex justify-center gap-2 text-xs">
-                <span className="bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono">admin@cookeasy.com / admin</span>
-                <span className="bg-gray-100 px-2 py-1 rounded text-gray-600 font-mono">user@cookeasy.com / user</span>
-            </div>
+            <p className="text-xs text-gray-400">Firebase Auth Integrated</p>
         </div>
       </div>
     </div>
