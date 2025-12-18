@@ -4,8 +4,6 @@ import {
   User as UserIcon, MapPin, CreditCard, HelpCircle, LogOut, 
   ChevronRight, ChevronLeft, Package, Edit2, Trash2, CheckCircle, Plus, Camera, Check, X
 } from 'lucide-react';
-import { updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { auth as firebaseAuth } from '../firebase';
 import { User, Order, Address, PaymentMethod, ProfileView, ReviewItem } from '../types';
 
 interface ProfileScreenProps {
@@ -42,21 +40,16 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const updated = cards.map(card => ({ ...card, isDefault: card.id === id }));
     onUpdateCards(updated);
   };
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && firebaseAuth.currentUser) {
+    if (file) {
       const reader = new FileReader();
-      reader.onloadend = async () => { 
-        const base64 = reader.result as string;
-        await updateProfile(firebaseAuth.currentUser!, { photoURL: base64 });
-        onUpdateUser({ ...user, avatarUrl: base64 }); 
-      };
+      reader.onloadend = () => { onUpdateUser({ ...user, avatarUrl: reader.result as string }); };
       reader.readAsDataURL(file);
     }
   };
-  const handleNameSave = async () => {
-    if (newName.trim() && firebaseAuth.currentUser) {
-      await updateProfile(firebaseAuth.currentUser, { displayName: newName });
+  const handleNameSave = () => {
+    if (newName.trim()) {
       onUpdateUser({ ...user, name: newName });
       setIsEditingName(false);
     }
@@ -71,7 +64,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({
     </div>
   );
 
-  // ... (Keep existing Order History, Address, and Payment views)
   if (view === ProfileView.Orders) {
     return (
       <div className="flex flex-col h-full bg-app-bg animate-in slide-in-from-right-8 duration-300">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Heart, Star } from 'lucide-react';
+import { Clock, Heart } from 'lucide-react';
 import { Recipe } from '../types';
 
 interface RecipeCardProps {
@@ -13,52 +13,44 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onPress, onToggleFavori
   return (
     <div 
       onClick={onPress}
-      className="bg-white rounded-[28px] p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col w-full active:scale-[0.97] transition-all duration-300 cursor-pointer border border-white group"
+      className="bg-white rounded-[24px] p-3 shadow-sm flex flex-col w-full active:scale-[0.98] transition-transform duration-200 cursor-pointer"
     >
-      <div className="relative w-full aspect-[1/1.2] rounded-[22px] overflow-hidden mb-3">
+      <div className="relative w-full aspect-[4/5] bg-gray-50 rounded-[20px] overflow-hidden mb-3 group">
         <img
           src={recipe.imageUrl}
           alt={recipe.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        
         <button 
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(e);
           }}
-          className={`absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-lg transition-all z-10 ${
+          className={`absolute top-2 right-2 p-2 rounded-full backdrop-blur-md transition-all duration-300 z-10 ${
             recipe.isFavorite 
-              ? 'bg-red-500 text-white' 
-              : 'bg-white/70 text-gray-800 hover:bg-white'
+              ? 'bg-white text-red-500 shadow-sm scale-110' 
+              : 'bg-black/20 text-white hover:bg-white hover:text-red-500'
           }`}
         >
-           <Heart size={14} className={recipe.isFavorite ? 'fill-current' : ''} />
+           <Heart size={16} strokeWidth={2.5} className={recipe.isFavorite ? 'fill-current' : ''} />
         </button>
-
-        <div className="absolute bottom-2.5 left-2.5 flex gap-1">
-          <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg text-[9px] font-bold text-white flex items-center gap-1">
-            <Clock size={10} />
-            {recipe.cookTime}
-          </div>
-        </div>
       </div>
 
-      <div className="px-1.5 pb-2 flex flex-col h-full">
-        <h3 className="text-app-dark font-bold text-sm leading-snug line-clamp-2 mb-2 group-hover:text-app-primary transition-colors">
+      <div className="px-1 flex flex-col gap-1">
+        <h3 className="text-[#111827] font-bold text-sm leading-tight line-clamp-2 min-h-[2.5em]">
           {recipe.title}
         </h3>
         
-        <div className="mt-auto flex items-center justify-between">
-           <div className="flex items-center gap-1">
-             <Star size={10} className="fill-orange-400 text-orange-400" />
-             <span className="text-[10px] font-bold text-gray-400">4.8</span>
+        <div className="flex flex-col gap-1 mt-0.5">
+           <div className="text-gray-400 text-xs font-medium">
+             {recipe.ingredientCount} ingredients
            </div>
-           <span className="text-[10px] font-bold text-app-primary bg-app-primary/10 px-2 py-0.5 rounded-full">
-             {recipe.ingredientCount} items
-           </span>
+           
+           <div className="flex items-center text-gray-400 text-xs font-medium gap-1.5">
+             <Clock size={12} className="text-gray-400" />
+             <span>{recipe.cookTime}</span>
+           </div>
         </div>
       </div>
     </div>
