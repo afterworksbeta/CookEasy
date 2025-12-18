@@ -1,14 +1,16 @@
+
 import React, { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, ChefHat, Eye, EyeOff, X } from 'lucide-react';
 import { UserRole } from '../types';
 
 interface AuthScreenProps {
-  onLogin: (email: string, role: UserRole) => void;
+  onLogin: (name: string, email: string, role: UserRole) => void;
   onClose?: () => void;
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,13 +27,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
       setIsLoading(false);
       
       if (email === 'admin@cookeasy.com' && password === 'admin') {
-        onLogin('Admin User', 'admin');
+        onLogin('Admin User', email, 'admin');
       } else if (email === 'user@cookeasy.com' && password === 'user') {
-        onLogin('Tester User', 'user');
+        onLogin('Tester User', email, 'user');
       } else {
         // For demo, allow registration to just log in as user
         if (!isLogin) {
-             onLogin(email.split('@')[0], 'user');
+             onLogin(fullName || email.split('@')[0], email, 'user');
         } else {
              setError('Invalid email or password. Try admin@cookeasy.com / admin');
         }
@@ -41,7 +43,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
 
   return (
     <div className="flex flex-col h-full bg-white relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-      {/* Close Button for Modal Mode */}
       {onClose && (
         <button 
           onClick={onClose}
@@ -51,7 +52,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
         </button>
       )}
 
-      {/* Background Decor */}
       <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-[#A3D63F]/20 rounded-full blur-3xl" />
       <div className="absolute bottom-[-5%] left-[-10%] w-[250px] h-[250px] bg-orange-100 rounded-full blur-3xl" />
 
@@ -66,12 +66,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
 
         <div className="bg-white/80 backdrop-blur-xl p-1 rounded-2xl border border-gray-100 shadow-sm mb-8 flex">
           <button 
+            type="button"
             onClick={() => setIsLogin(true)}
             className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${isLogin ? 'bg-[#111827] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Login
           </button>
           <button 
+            type="button"
             onClick={() => setIsLogin(false)}
             className={`flex-1 py-3 text-sm font-semibold rounded-xl transition-all ${!isLogin ? 'bg-[#111827] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
           >
@@ -86,8 +88,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
               <div className="relative">
                 <input 
                   type="text" 
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Doe"
                   className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-[#A3D63F]/50 focus:border-[#A3D63F] outline-none transition-all"
+                  required
                 />
                 <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               </div>
@@ -103,6 +108,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="hello@example.com"
                 className="w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-[#A3D63F]/50 focus:border-[#A3D63F] outline-none transition-all"
+                required
               />
               <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             </div>
@@ -117,6 +123,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onClose }) => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full pl-11 pr-11 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-[#A3D63F]/50 focus:border-[#A3D63F] outline-none transition-all"
+                required
               />
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
               <button 

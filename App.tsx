@@ -24,12 +24,8 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // --- Shared Data State (Lifted for Admin/User Sync) ---
-  
-  // Recipes State
+  // --- Shared Data State ---
   const [recipesDatabase, setRecipesDatabase] = useState<Recipe[]>(RECOMMENDED_RECIPES);
-
-  // Initialize products database
   const [productsDatabase, setProductsDatabase] = useState<Product[]>(() => {
      const vegProducts = COLES_VEGETABLES_DATABASE.map((item, index) => ({
         id: `veg-${index + 100}`,
@@ -183,23 +179,15 @@ const App: React.FC = () => {
   const [homeView, setHomeView] = useState<HomeView>(HomeView.Dashboard);
   const [shopView, setShopView] = useState<ShopView>(ShopView.Cart);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  
-  // Location State
   const [currentLocation, setCurrentLocation] = useState(LOCATIONS[0]);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
-  
-  // Review Flow State
   const [extractedImage, setExtractedImage] = useState<string | null>(null);
   const [reviewItems, setReviewItems] = useState<ExtendedReviewItem[]>([]);
   const [cartItems, setCartItems] = useState<ReviewItem[]>([]);
-  
-  // Selected Product/Category
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedReviewItem, setSelectedReviewItem] = useState<ExtendedReviewItem | undefined>(undefined);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  
-  // Profile Data
   const [savedAddresses, setSavedAddresses] = useState<Address[]>(MOCK_ADDRESSES);
   const [savedCards, setSavedCards] = useState<PaymentMethod[]>(MOCK_CARDS);
   const [lastOrder, setLastOrder] = useState<{items: ReviewItem[], total: number} | null>(null);
@@ -214,11 +202,11 @@ const App: React.FC = () => {
   };
 
   // --- Auth Handlers ---
-  const handleLogin = (name: string, role: UserRole) => {
+  const handleLogin = (name: string, email: string, role: UserRole) => {
     setCurrentUser({
       id: `u-${Math.random().toString(36).substr(2, 5)}`,
       name: name,
-      email: role === 'admin' ? 'admin@cookeasy.com' : 'user@cookeasy.com',
+      email: email,
       avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150',
       role: role
     });
@@ -244,15 +232,12 @@ const App: React.FC = () => {
   const handleAdminUpdateProduct = (updated: Product) => {
     setProductsDatabase(prev => prev.map(p => p.id === updated.id ? updated : p));
   };
-
   const handleAdminAddProduct = (newProduct: Product) => {
     setProductsDatabase(prev => [newProduct, ...prev]);
   };
-
   const handleAdminDeleteProduct = (id: string) => {
     setProductsDatabase(prev => prev.filter(p => p.id !== id));
   };
-
   const handleAdminUpdateOrderStatus = (orderId: string, status: Order['status'], partner?: string) => {
     setGlobalOrders(prev => prev.map(o => {
         if (o.id === orderId) {
@@ -265,20 +250,15 @@ const App: React.FC = () => {
         return o;
     }));
   };
-
-  // Recipe Handlers
   const handleAdminAddRecipe = (newRecipe: Recipe) => {
     setRecipesDatabase(prev => [...prev, newRecipe]);
   };
-
   const handleAdminUpdateRecipe = (updated: Recipe) => {
     setRecipesDatabase(prev => prev.map(r => r.id === updated.id ? updated : r));
   };
-
   const handleAdminDeleteRecipe = (id: string) => {
     setRecipesDatabase(prev => prev.filter(r => r.id !== id));
   };
-  
   const handleToggleFavorite = (recipeId: string) => {
     setRecipesDatabase(prev => prev.map(r => 
         r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r
@@ -289,23 +269,19 @@ const App: React.FC = () => {
   };
 
   // --- User App Logic ---
-
   const findProductInDatabase = (name: string) => {
       const lowerName = name.toLowerCase();
       return productsDatabase.find(p => p.name.toLowerCase().includes(lowerName) || lowerName.includes(p.name.toLowerCase()));
   };
-  
   const getMatchingProducts = (ingredients: string[]): Product[] => {
     return ingredients.map(ingName => {
         return findProductInDatabase(ingName) || generateMockProduct(ingName);
     });
   };
-
   const handleAnalysisComplete = (ingredients: Ingredient[], imagePreview: string) => {
     const initialItems: ExtendedReviewItem[] = ingredients.map((ing, index) => {
         const dbProduct = findProductInDatabase(ing.name);
         const product = dbProduct || generateMockProduct(ing.name);
-
         return {
             id: `item-${index}`,
             ingredient: ing,
@@ -314,25 +290,21 @@ const App: React.FC = () => {
             isSelected: true
         };
     });
-    
     setReviewItems(initialItems);
     setExtractedImage(imagePreview);
-    setSelectedRecipe(null); // Ensure we are not in recipe flow
+    setSelectedRecipe(null);
     setHomeView(HomeView.Review);
   };
-
   const handleProductSelect = (product: Product, item?: ExtendedReviewItem) => {
     setSelectedProduct(product);
     setSelectedReviewItem(item);
     setHomeView(HomeView.ProductDetail);
   };
-  
   const handleRecipeSelect = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setReturnTab(activeTab);
     setHomeView(HomeView.RecipeDetail);
   };
-
   const handleCategoryClick = (categoryId: string) => {
       const category = CATEGORIES.find(c => c.id === categoryId);
       if (category) {
@@ -342,7 +314,6 @@ const App: React.FC = () => {
           setActiveTab(Tab.Home);
       }
   };
-
   const handleAddToCart = (items: ReviewItem[]) => {
     requireAuth(() => {
         const newCart = [...cartItems];
@@ -359,9 +330,7 @@ const App: React.FC = () => {
                 }
             }
         });
-
         setCartItems(newCart);
-        // Navigate to dashboard then open cart drawer
         if (homeView === HomeView.Review || homeView === HomeView.RecipeDetail) {
              setHomeView(HomeView.Dashboard);
              setIsCartOpen(true);
@@ -370,7 +339,6 @@ const App: React.FC = () => {
         }
     });
   };
-
   const handleSingleItemPurchase = (updatedItem: ReviewItem) => {
       requireAuth(() => {
           if (selectedReviewItem) {
@@ -393,12 +361,10 @@ const App: React.FC = () => {
           }
       });
   };
-
   const handlePaymentSuccess = () => {
       const total = cartItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
       const deliveryFee = cartItems.length === 0 ? 0 : (total > 50 ? 0 : 3.99);
       const finalTotal = total + deliveryFee;
-
       const newOrder: Order = {
           id: `ORD-${Math.floor(Math.random() * 10000) + 1000}`,
           date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -407,9 +373,7 @@ const App: React.FC = () => {
           items: [...cartItems],
           customerName: currentUser?.name || 'Guest'
       };
-
       setGlobalOrders(prev => [newOrder, ...prev]);
-      
       setLastOrder({
           items: [...cartItems],
           total: finalTotal
@@ -419,8 +383,6 @@ const App: React.FC = () => {
   };
 
   // --- Rendering ---
-
-  // Admin exclusive view
   if (currentUser?.role === 'admin') {
       return (
           <AdminDashboard 
@@ -440,8 +402,6 @@ const App: React.FC = () => {
       );
   }
 
-  // --- Regular User / Guest App Render ---
-  
   const userOrders = currentUser ? globalOrders.filter(o => o.customerName === currentUser.name) : [];
 
   const renderCartFlow = () => {
@@ -458,9 +418,7 @@ const App: React.FC = () => {
             />
           );
       }
-
       const defaultAddress = savedAddresses.find(a => a.isDefault) || savedAddresses[0];
-
       return (
         <div className="h-full flex flex-col">
           <div className="p-4 flex items-center bg-[#F6F7F9]">
@@ -486,105 +444,41 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     if (isCartOpen) return renderCartFlow();
-
     if (activeTab === Tab.Home) {
       if (homeView === HomeView.Upload) {
-        return (
-          <UploadScreen 
-            onBack={() => setHomeView(HomeView.Dashboard)}
-            onAnalysisComplete={handleAnalysisComplete}
-          />
-        );
+        return <UploadScreen onBack={() => setHomeView(HomeView.Dashboard)} onAnalysisComplete={handleAnalysisComplete} />;
       }
       if (homeView === HomeView.Review) {
-        return (
-          <IngredientReviewScreen 
-            items={reviewItems}
-            onUpdateItems={setReviewItems}
-            onBack={() => selectedRecipe ? setHomeView(HomeView.RecipeDetail) : setHomeView(HomeView.Upload)}
-            onAddToCart={handleAddToCart}
-            onProductSelect={handleProductSelect}
-          />
-        );
+        return <IngredientReviewScreen items={reviewItems} onUpdateItems={setReviewItems} onBack={() => selectedRecipe ? setHomeView(HomeView.RecipeDetail) : setHomeView(HomeView.Upload)} onAddToCart={handleAddToCart} onProductSelect={handleProductSelect} />;
       }
       if (homeView === HomeView.ProductDetail && selectedProduct) {
-        return (
-          <ProductDetailScreen 
-             product={selectedProduct}
-             initialItem={selectedReviewItem}
-             onBack={() => selectedCategory ? setHomeView(HomeView.CategoryDetail) : (selectedRecipe ? setHomeView(HomeView.RecipeDetail) : setHomeView(HomeView.Review))}
-             onAddToCart={handleSingleItemPurchase}
-          />
-        );
+        return <ProductDetailScreen product={selectedProduct} initialItem={selectedReviewItem} onBack={() => selectedCategory ? setHomeView(HomeView.CategoryDetail) : (selectedRecipe ? setHomeView(HomeView.RecipeDetail) : setHomeView(HomeView.Review))} onAddToCart={handleSingleItemPurchase} />;
       }
       if (homeView === HomeView.CategoryDetail && selectedCategory) {
-          return (
-              <CategoryDetailScreen 
-                  category={selectedCategory}
-                  products={productsDatabase}
-                  onBack={() => {
-                      setHomeView(HomeView.Dashboard);
-                      setActiveTab(returnTab);
-                  }}
-                  onProductSelect={(p) => handleProductSelect(p, undefined)}
-                  onAddToCart={(item) => handleAddToCart([item])}
-              />
-          );
+          return <CategoryDetailScreen category={selectedCategory} products={productsDatabase} onBack={() => { setHomeView(HomeView.Dashboard); setActiveTab(returnTab); }} onProductSelect={(p) => handleProductSelect(p, undefined)} onAddToCart={(item) => handleAddToCart([item])} />;
       }
       if (homeView === HomeView.RecipeDetail && selectedRecipe) {
-          return (
-              <RecipeDetailScreen 
-                  recipe={selectedRecipe}
-                  onBack={() => {
-                      setHomeView(HomeView.Dashboard);
-                      setActiveTab(returnTab);
-                  }}
-                  getMatchingProducts={getMatchingProducts}
-                  onAddRecipeToCart={(items) => {
-                      const extendedItems: ExtendedReviewItem[] = items.map(item => ({
-                          ...item,
-                          isSelected: true
-                      }));
-                      setReviewItems(extendedItems);
-                      setHomeView(HomeView.Review);
-                  }}
-                  onToggleFavorite={() => handleToggleFavorite(selectedRecipe.id)}
-              />
-          );
+          return <RecipeDetailScreen recipe={selectedRecipe} onBack={() => { setHomeView(HomeView.Dashboard); setActiveTab(returnTab); }} getMatchingProducts={getMatchingProducts} onAddRecipeToCart={(items) => { const extendedItems: ExtendedReviewItem[] = items.map(item => ({ ...item, isSelected: true })); setReviewItems(extendedItems); setHomeView(HomeView.Review); }} onToggleFavorite={() => handleToggleFavorite(selectedRecipe.id)} />;
       }
-
       return (
         <div className="flex flex-col h-full bg-[#FAFAFA] animate-in fade-in duration-300">
-          
-          {/* Mobile Header with Location Dropdown */}
           <div className="flex justify-between items-center px-6 pt-12 pb-4 bg-[#FAFAFA] sticky top-0 z-30">
             <div className="flex items-center gap-2 relative z-50">
                <div className="p-2 bg-white rounded-full shadow-sm">
                  <MapPin size={18} className="text-app-primary" strokeWidth={2.5} />
                </div>
                <div className="relative">
-                  <button 
-                    onClick={() => setIsLocationOpen(!isLocationOpen)}
-                    className="flex flex-col items-start text-left focus:outline-none"
-                  >
+                  <button onClick={() => setIsLocationOpen(!isLocationOpen)} className="flex flex-col items-start text-left focus:outline-none">
                       <div className="flex items-center gap-1">
                         <span className="text-xs font-medium text-gray-400">Current Location</span>
                         <ChevronDown size={12} className={`text-gray-400 transition-transform duration-200 ${isLocationOpen ? 'rotate-180' : ''}`} />
                       </div>
                       <span className="text-sm font-bold text-app-dark leading-none">{currentLocation}</span>
                   </button>
-
                   {isLocationOpen && (
                     <div className="absolute top-full left-0 mt-3 w-48 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 py-2 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
                       {LOCATIONS.map(loc => (
-                        <button
-                          key={loc}
-                          onClick={() => {
-                            setCurrentLocation(loc);
-                            setIsLocationOpen(false);
-                          }}
-                          className={`w-full text-left px-4 py-3 text-sm font-medium hover:bg-gray-50 flex justify-between items-center transition-colors ${currentLocation === loc ? 'text-app-lime bg-app-lime/5' : 'text-app-dark'}`}
-                        >
+                        <button key={loc} onClick={() => { setCurrentLocation(loc); setIsLocationOpen(false); }} className={`w-full text-left px-4 py-3 text-sm font-medium hover:bg-gray-50 flex justify-between items-center transition-colors ${currentLocation === loc ? 'text-app-lime bg-app-lime/5' : 'text-app-dark'}`}>
                           {loc}
                           {currentLocation === loc && <Check size={16} />}
                         </button>
@@ -593,46 +487,26 @@ const App: React.FC = () => {
                   )}
                </div>
             </div>
-
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-app-dark relative"
-            >
+            <button onClick={() => setIsCartOpen(true)} className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-app-dark relative">
               <ShoppingCart size={20} strokeWidth={2} />
-              {cartItems.length > 0 && (
-                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-app-lime rounded-full border-2 border-white" />
-              )}
+              {cartItems.length > 0 && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-app-lime rounded-full border-2 border-white" />}
             </button>
           </div>
-
           <div className="flex-1 overflow-y-auto no-scrollbar pb-24">
-            
-            {/* Greeting & Search */}
             <div className="px-6 mt-2 mb-6">
               <h1 className="text-[28px] font-bold text-app-dark leading-tight mb-4">
-                Hello, {currentUser ? currentUser.name.split(' ')[0] : 'Guest'} <span className="text-2xl">👋</span><br />
+                Hello, {currentUser ? currentUser.name : 'Guest'} <span className="text-2xl">👋</span><br />
                 <span className="text-gray-400 font-medium text-lg">What are you cooking?</span>
               </h1>
-
-              {/* Modern Search Bar */}
               <div className="bg-white p-2 rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex items-center gap-3 pr-4">
                   <div className="w-10 h-10 bg-app-lime rounded-xl flex items-center justify-center text-white shrink-0">
                       <Search size={20} />
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Search for recipes, ingredients..." 
-                    className="flex-1 bg-transparent outline-none text-sm text-app-dark font-medium placeholder-gray-300"
-                  />
+                  <input type="text" placeholder="Search for recipes, ingredients..." className="flex-1 bg-transparent outline-none text-sm text-app-dark font-medium placeholder-gray-300" />
               </div>
             </div>
-
-            {/* Main Action: Upload */}
             <div className="px-6 mb-8">
-              <button
-                onClick={() => requireAuth(() => { setHomeView(HomeView.Upload); setActiveTab(Tab.Home); })}
-                className="w-full h-[80px] rounded-[28px] overflow-hidden relative group shadow-xl shadow-app-lime/20 active:scale-[0.98] transition-all"
-              >
+              <button onClick={() => requireAuth(() => { setHomeView(HomeView.Upload); setActiveTab(Tab.Home); })} className="w-full h-[80px] rounded-[28px] overflow-hidden relative group shadow-xl shadow-app-lime/20 active:scale-[0.98] transition-all">
                 <div className="absolute inset-0 bg-gradient-to-r from-app-lime to-[#8BC34A]" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
                 <div className="absolute inset-0 flex items-center justify-between px-6">
@@ -646,21 +520,13 @@ const App: React.FC = () => {
                 </div>
               </button>
             </div>
-
-            {/* Categories */}
             <div className="mb-8">
               <div className="flex justify-between items-center px-6 mb-4">
                 <h2 className="text-lg font-bold text-app-dark">Categories</h2>
                 <button onClick={() => setActiveTab(Tab.Categories)} className="text-xs font-semibold text-app-primary">See All</button>
               </div>
-              <CategoryStrip 
-                categories={CATEGORIES}
-                selectedId={selectedCategory?.id || ''}
-                onSelect={handleCategoryClick}
-              />
+              <CategoryStrip categories={CATEGORIES} selectedId={selectedCategory?.id || ''} onSelect={handleCategoryClick} />
             </div>
-
-            {/* Recommended Recipes */}
             <div className="px-6 pb-4">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="text-xl font-bold text-[#111827]">Recommended</h2>
@@ -668,12 +534,7 @@ const App: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {recipesDatabase.map(recipe => (
-                   <RecipeCard 
-                      key={recipe.id} 
-                      recipe={recipe} 
-                      onPress={() => handleRecipeSelect(recipe)} 
-                      onToggleFavorite={() => handleToggleFavorite(recipe.id)}
-                   />
+                   <RecipeCard key={recipe.id} recipe={recipe} onPress={() => handleRecipeSelect(recipe)} onToggleFavorite={() => handleToggleFavorite(recipe.id)} />
                 ))}
               </div>
             </div>
@@ -681,7 +542,6 @@ const App: React.FC = () => {
         </div>
       );
     }
-    // ... rest of the tabs
     if (activeTab === Tab.Orders) {
         return (
             <div className="h-full bg-app-bg pt-12">
@@ -705,12 +565,7 @@ const App: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => handleAddToCart(order.items)}
-                                className="w-full py-2 mt-2 text-sm font-medium text-app-primary hover:bg-app-primary/5 rounded-[32px] transition-colors border border-app-primary/20"
-                            >
-                                Order again
-                            </button>
+                            <button onClick={() => handleAddToCart(order.items)} className="w-full py-2 mt-2 text-sm font-medium text-app-primary hover:bg-app-primary/5 rounded-[32px] transition-colors border border-app-primary/20">Order again</button>
                         </div>
                         ))}
                         {userOrders.length === 0 && <p className="text-gray-400 text-center mt-10">No orders yet.</p>}
@@ -719,7 +574,6 @@ const App: React.FC = () => {
             </div>
         );
     }
-
     if (activeTab === Tab.Categories) {
         return (
             <div className="h-full bg-app-bg pt-12">
@@ -728,11 +582,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4 px-5 pb-24 overflow-y-auto no-scrollbar">
                     {CATEGORIES.map(cat => (
-                        <div 
-                            key={cat.id} 
-                            onClick={() => handleCategoryClick(cat.id)}
-                            className="bg-white rounded-[24px] p-3 shadow-sm flex flex-col items-center gap-3 hover:shadow-md transition-shadow cursor-pointer active:scale-95 duration-200"
-                        >
+                        <div key={cat.id} onClick={() => handleCategoryClick(cat.id)} className="bg-white rounded-[24px] p-3 shadow-sm flex flex-col items-center gap-3 hover:shadow-md transition-shadow cursor-pointer active:scale-95 duration-200">
                             <img src={cat.imageUrl} className="w-full aspect-video object-cover rounded-xl" alt={cat.label} />
                             <span className="font-semibold text-app-dark">{cat.label}</span>
                         </div>
@@ -741,22 +591,9 @@ const App: React.FC = () => {
             </div>
         );
     }
-
     if (activeTab === Tab.Profile && currentUser) {
-      return (
-        <ProfileScreen 
-            user={currentUser}
-            orders={userOrders}
-            addresses={savedAddresses}
-            cards={savedCards}
-            onOrderAgain={(items) => handleAddToCart(items)}
-            onUpdateAddresses={setSavedAddresses}
-            onUpdateCards={setSavedCards}
-            onLogout={handleLogout}
-        />
-      );
+      return <ProfileScreen user={currentUser} orders={userOrders} addresses={savedAddresses} cards={savedCards} onOrderAgain={(items) => handleAddToCart(items)} onUpdateAddresses={setSavedAddresses} onUpdateCards={setSavedCards} onUpdateUser={(updated) => setCurrentUser(updated)} onLogout={handleLogout} />;
     }
-
     return null;
   };
 
@@ -765,12 +602,9 @@ const App: React.FC = () => {
       <div className="flex-1 overflow-hidden relative">
         {renderContent()}
       </div>
-      
       {!isCartOpen && homeView === HomeView.Dashboard && (
         <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
       )}
-
-      {/* Auth Modal Overlay */}
       {isAuthModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
            <div className="w-full h-full sm:h-auto sm:max-w-md bg-white sm:rounded-[32px] overflow-hidden shadow-2xl">
